@@ -1,3 +1,4 @@
+// Hakee kaikki harjoitukset ja lisää kuhunkin liittyvän asiakkaan tiedot
 export async function getTrainings() {
     const response = await fetch('https://customer-rest-service-frontend-personaltrainer.2.rahtiapp.fi/api/trainings');
     if (!response.ok) {
@@ -7,21 +8,26 @@ export async function getTrainings() {
     const data = await response.json();
     const trainings = data._embedded.trainings;
   
+    // Rikastetaan jokainen harjoitus siihen liittyvällä asiakastiedolla
     const enrichedTrainings = await Promise.all(
       trainings.map(async (training) => {
         const customerUrl = training._links.customer.href;
         try {
+          // Haetaan asiakastiedot harjoitukseen liittyvän asiakaslinkin kautta
           const res = await fetch(customerUrl);
           if (!res.ok) throw new Error(`Customer fetch failed: ${res.status}`);
           const customerData = await res.json();
+          // Palautetaan harjoitus, johon on lisätty asiakastiedot
           return { ...training, customer: customerData };
         } catch (error) {
+          // Jos asiakastietojen haku epäonnistuu, lisätään null
           console.error("Failed to fetch customer", error);
           return { ...training, customer: null };
         }
       })
     );
   
+    // Palautetaan rikastetut harjoitukset
     return enrichedTrainings;
   }
   
